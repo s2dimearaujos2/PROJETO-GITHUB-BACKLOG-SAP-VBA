@@ -67,5 +67,7 @@ Este projeto não contém dados reais ou informações sensíveis, sendo apenas 
 Imagem ilustrativa do controle de backlog estruturado:
 
 <img width="382" height="342" alt="image" src="https://github.com/user-attachments/assets/c0d02634-64b3-439b-bf64-d7737281abbb" />
+
+ 
  ## Códigos 
  Para acesso aos códigos na integra, acessar a pasta script.
