@@ -1,3 +1,4 @@
+## Sub principal que é executada inicialmente.
 Sub Importar_SAP()
 
     On Error GoTo Erro
@@ -153,6 +154,8 @@ Erro:
 End Sub
 
 --------------------------------------------------------------------------------------------------------------------------------
+## sub´s secundarias que a primeira chama.
+
 Sub Aplicar_Regras_STU()
 
     Dim ws As Worksheet
