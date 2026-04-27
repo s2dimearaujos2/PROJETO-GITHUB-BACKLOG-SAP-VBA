@@ -15,6 +15,7 @@ A solução foi baseada em um cenário real de operação logística, onde havia
 ## 🧩 Problema
 Em operações com alto volume de materiais, o controle manual de backlog pode gerar:
 
+- Tempo médio diario gasto era cerca de 2h
 - baixa visibilidade do status dos pedidos  
 - retrabalho operacional  
 - risco de erro manual  
@@ -25,6 +26,7 @@ Em operações com alto volume de materiais, o controle manual de backlog pode g
 ## 💡 Solução
 Foi desenvolvida uma automação que:
 
+- Tempo médio diario gasto com essa atividade pasou a ser de 15min
 - acessa o SAP automaticamente via script  
 - extrai dados relevantes de pedidos  
 - organiza as informações em Excel  
