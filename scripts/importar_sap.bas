@@ -1,74 +1,153 @@
-# SAP Backlog Automation (VBA + SAP GUI)
+Sub Importar_SAP()
 
-## 📌 Descrição
-Projeto desenvolvido para automatizar a extração e organização de dados de backlog de recebimento utilizando SAP GUI Scripting integrado com VBA (Excel).
+    On Error GoTo Erro
+    
+    '========================
+    ' DECLARAÇÕES
+    '========================
+    Dim wbOrigem As Workbook
+    Dim wsOrigem As Worksheet
+    Dim wsDestino As Worksheet
+    Dim wsDesconsiderar As Worksheet
+    
+    Dim caminhoArquivo As String
+    Dim ultimaLinha As Long
+    Dim i As Long
+    Dim texto As String
+    Dim resultado As Variant
+    
+    '========================
+    ' CONFIGURAÇÕES INICIAIS
+    '========================
+    Set wsDestino = ThisWorkbook.Sheets("SAP_RAW")
+    Set wsDesconsiderar = ThisWorkbook.Sheets("desconsiderar")
+    
+    Application.ScreenUpdating = False
+    Application.Calculation = xlCalculationManual
 
-A solução foi baseada em um cenário real de operação logística, onde havia necessidade de:
+    '========================
+    ' EXTRAÇÃO SAP (AUTOMAÇÃO)
+    '========================
+    ' Esta função executa a extração via SAP GUI scripting
+    Call Baixar_Relatorio_SAP
 
-- acompanhar pedidos em tempo real  
-- reduzir input manual  
-- aumentar a visibilidade do fluxo  
-- melhorar o tempo de resposta operacional  
+    ' Caminho genérico (REMOVIDO DADO SENSÍVEL)
+    caminhoArquivo = "C:\CAMINHO\GENERIC\backlog.xlsx"
+    
+    '========================
+    ' IMPORTAÇÃO DE DADOS
+    '========================
+    Set wbOrigem = Workbooks.Open(caminhoArquivo)
+    Set wsOrigem = wbOrigem.Sheets(1)
 
----
+    ' Limpar dados anteriores
+    wsDestino.Cells.Clear
 
-## 🧩 Problema
-Em operações com alto volume de materiais, o controle manual de backlog pode gerar:
+    ' Copiar dados do relatório SAP
+    wsOrigem.UsedRange.Copy
+    wsDestino.Range("A1").PasteSpecial xlPasteValues
 
-- Tempo médio diario gasto era cerca de 2h
-- baixa visibilidade do status dos pedidos  
-- retrabalho operacional  
-- risco de erro manual  
-- dificuldade de priorização  
+    ' Remover linhas vazias (coluna H)
+    wsDestino.Range("A1").AutoFilter Field:=8, Criteria1:="="
+    
+    On Error Resume Next
+    wsDestino.Range("A2:A" & wsDestino.Cells(wsDestino.Rows.Count, "A").End(xlUp).Row) _
+        .SpecialCells(xlCellTypeVisible).EntireRow.Delete
+    On Error GoTo 0
+    
+    wsDestino.AutoFilterMode = False
 
----
+    ' Fechar arquivo origem
+    wbOrigem.Close False
 
-## 💡 Solução
-Foi desenvolvida uma automação que:
+    '========================
+    ' FORMATAÇÃO
+    '========================
+    wsDestino.Columns("B").NumberFormat = "hh:mm"
+    wsDestino.Columns("I").NumberFormat = "dd/mm/yyyy"
 
-- Tempo médio diario gasto com essa atividade pasou a ser de 15min
-- acessa o SAP automaticamente via script  
-- extrai dados relevantes de pedidos  
-- organiza as informações em Excel  
-- estrutura o backlog por status (fila, em processo, concluído)  
+    ' Forçar valores (remover fórmulas)
+    wsDestino.Columns("A").Value = wsDestino.Columns("A").Value
+    wsDestino.Columns("C").Value = wsDestino.Columns("C").Value
+    wsDestino.Columns("D").Value = wsDestino.Columns("D").Value
 
----
+    ' Ajuste de prioridade (exemplo)
+    wsDestino.Columns("C").Replace What:="0", Replacement:="4", LookAt:=xlWhole
 
-## ⚙️ Tecnologias utilizadas
+    '========================
+    ' ADICIONAR COLUNAS AUXILIARES
+    '========================
+    wsDestino.Cells(1, "P").Value = "STATUS"
+    wsDestino.Cells(1, "Q").Value = "CONSIDERAR"
+    wsDestino.Cells(1, "R").Value = "JOB_FINALIZADO"
 
-- Excel VBA  
-- SAP GUI Scripting  
-- Automação de processos  
+    '========================
+    ' REGRA 1: CLASSIFICAÇÃO DE ITENS
+    '========================
+    ultimaLinha = wsDestino.Cells(wsDestino.Rows.Count, "E").End(xlUp).Row
 
----
+    For i = 2 To ultimaLinha
 
-## 📊 Resultado esperado
+        texto = wsDestino.Cells(i, "E").Value
 
-- redução de tempo operacional  
-- maior controle do fluxo  
-- aumento da produtividade  
-- melhor tomada de decisão  
+        ' Exemplo de classificação por tipo de produto
+        If Left(texto, 7) = "EXEMPLO1" _
+        Or Left(texto, 3) = "ABC" _
+        Or Left(texto, 6) = "ITEMX" Then
+        
+            wsDestino.Cells(i, "C").Value = "CLASSIFICADO"
+        
+        End If
 
----
+    Next i
 
-## 🚀 Possíveis melhorias
+    '========================
+    ' REGRA 2: VALIDAR CONSIDERAÇÃO
+    '========================
+    ultimaLinha = wsDestino.Cells(wsDestino.Rows.Count, "D").End(xlUp).Row
 
-- integração com Power BI  
-- atualização automática em horários programados  
-- envio automático de relatórios  
+    For i = 2 To ultimaLinha
 
----
+        resultado = Application.VLookup(wsDestino.Cells(i, "D").Value, _
+                    wsDesconsiderar.Range("A:C"), 3, False)
 
-## ⚠️ Observação
-Este projeto não contém dados reais ou informações sensíveis, sendo apenas uma representação da lógica aplicada em ambiente profissional.
+        If IsError(resultado) Then
+            wsDestino.Cells(i, "Q").Value = "SIM"
+        Else
+            wsDestino.Cells(i, "Q").Value = resultado
+        End If
 
-## 📷 Exemplo (simulado)
+    Next i
 
-Imagem ilustrativa do controle de backlog estruturado:
+    '========================
+    ' PROCESSOS COMPLEMENTARES
+    '========================
+    Call Atualizar_Apex_Andamento
+    Call Aplicar_Regras_STU
+    Call Criar_Tabela_Dinamica
+    Call Cruzar_Apex_Finalizado
 
-<img width="382" height="342" alt="image" src="https://github.com/user-attachments/assets/c0d02634-64b3-439b-bf64-d7737281abbb" />
-## 📂 Estrutura do código
+    '========================
+    ' REGRA FINAL
+    '========================
+    ultimaLinha = wsDestino.Cells(wsDestino.Rows.Count, "R").End(xlUp).Row
 
-O script principal está disponível em:
+    For i = 2 To ultimaLinha
+        If Trim(wsDestino.Cells(i, "R").Value) <> "" _
+        And Trim(wsDestino.Cells(i, "R").Value) <> "0" Then
+            
+            wsDestino.Cells(i, "P").Value = "AGUARDANDO PROCESSAMENTO"
+        
+        End If
+    Next i
 
-/scripts/importar_sap.bas
+Fim:
+    Application.ScreenUpdating = True
+    Application.Calculation = xlCalculationAutomatic
+    Exit Sub
+
+Erro:
+    MsgBox "Erro: " & Err.Description
+    Resume Fim
+
+End Sub
