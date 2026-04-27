@@ -59,3 +59,10 @@ Foi desenvolvida uma automação que:
 
 ## ⚠️ Observação
 Este projeto não contém dados reais ou informações sensíveis, sendo apenas uma representação da lógica aplicada em ambiente profissional.
+
+## 📷 Exemplo (simulado)
+
+Imagem ilustrativa do controle de backlog estruturado:
+
+<img width="382" height="342" alt="image" src="https://github.com/user-attachments/assets/c0d02634-64b3-439b-bf64-d7737281abbb" />
+
